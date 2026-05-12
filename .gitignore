@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+nltk_data/
+models/*.joblib
+data/*.sqlite
+knowledge/*.pdf
+app/static/fonts/
+app/static/images/

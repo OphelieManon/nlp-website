@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Write a review · {{ product.product_name }}{% endblock %}
+
+{% block content %}
+<div class="form-shell">
+  <div class="form-shell__eyebrow">Step {% if predicted %}2 of 2 — confirm{% else %}1 of 2 — write{% endif %}</div>
+  <h1>Write a review for<br><em>{{ product.product_name }}</em></h1>
+  <p class="form-shell__lede">
+    Tell us what you think. Our classifier suggests a label
+    after you submit — you'll have the chance to override it
+    before it's saved.
+  </p>
+
+  {% if error %}
+    <div class="alert">{{ error }}</div>
+  {% endif %}
+
+  {% if predicted %}
+    {% set label_text = "Would buy" if predicted.label == 1 else "Would not buy" %}
+    <div class="predict-banner">
+      <span>Our classifier predicts</span>
+      <strong>{{ label_text }}</strong>
+      <span class="predict-banner__conf">· {{ "%.0f%%"|format(predicted.proba * 100) }} confidence</span>
+    </div>
+  {% endif %}
+
+  <form action="{{ url_for('review_form', product_id=product.product_id) }}" method="post" novalidate>
+
+    <div class="field">
+      <label class="field__label" for="title">Review title</label>
+      <input type="text" id="title" name="title"
+             value="{{ form.title or '' }}" maxlength="200" required>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Rating</span>
+      <div class="rating-group" role="radiogroup" aria-label="Rating">
+        {# Reversed in DOM order; CSS uses row-reverse so the visual order
+           runs 1..5 left-to-right while the sibling-selector hover/check
+           model lights up correctly. #}
+        {% for r in [5, 4, 3, 2, 1] %}
+          <input type="radio" name="rating" id="rating-{{ r }}" value="{{ r }}"
+                 {% if form.rating and form.rating|string == r|string %}checked{% endif %}
+                 required>
+          <label for="rating-{{ r }}" title="{{ r }} stars">★</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="review_text">Review</label>
+      <textarea id="review_text" name="review_text"
+                rows="5" minlength="1" maxlength="2000" required
+                placeholder="What did you think?">{{ form.review_text or '' }}</textarea>
+    </div>
+
+    {% if predicted %}
+      <div class="field">
+        <span class="field__label">Label · override if you disagree</span>
+        <div class="label-radio-group">
+          <input type="radio" name="predicted_label" id="label-1" value="1"
+                 {% if predicted.label == 1 %}checked{% endif %}>
+          <label for="label-1">Would buy</label>
+          <input type="radio" name="predicted_label" id="label-0" value="0"
+                 {% if predicted.label == 0 %}checked{% endif %}>
+          <label for="label-0">Would not buy</label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn--accent">Save review</button>
+    {% else %}
+      <button type="submit" class="btn btn--accent">Predict label →</button>
+    {% endif %}
+
+    <a href="{{ url_for('product_detail', product_id=product.product_id) }}"
+       class="btn btn--link">Cancel</a>
+  </form>
+</div>
+{% endblock %}

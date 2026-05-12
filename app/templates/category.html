@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card with context %}
+{% block title %}{{ category }} · Maison de Beauté{% endblock %}
+
+{% block content %}
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <a href="/">← Back to catalogue</a>
+</nav>
+
+<header class="category-hero">
+  <div class="hero__eyebrow">Catalogue / {{ category }}</div>
+  <h1 class="category-hero__title">{{ category }}.</h1>
+  <p class="category-hero__meta">
+    {{ total }} product{{ 's' if total != 1 else '' }}
+    {%- if pages > 1 %} · Page {{ page }} of {{ pages }}{% endif %}
+  </p>
+</header>
+
+<section class="product-grid">
+  {% for p in page_products %}
+    {{ product_card(p) }}
+  {% endfor %}
+</section>
+
+{% if pages > 1 %}
+<nav class="pagination" aria-label="Pagination">
+  {% if page > 1 %}
+    <a class="pagination__link" href="?page={{ page - 1 }}">← Previous</a>
+  {% else %}
+    <span class="pagination__link pagination--disabled">← Previous</span>
+  {% endif %}
+  <span class="pagination__pages">Page <strong>{{ page }}</strong> of {{ pages }}</span>
+  {% if page < pages %}
+    <a class="pagination__link" href="?page={{ page + 1 }}">Next →</a>
+  {% else %}
+    <span class="pagination__link pagination--disabled">Next →</span>
+  {% endif %}
+</nav>
+{% endif %}
+
+{% endblock %}

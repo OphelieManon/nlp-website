@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% from "_macros.html" import similar_card, stars with context %}
+{% block title %}{{ product.product_name }} · Maison de Beauté{% endblock %}
+
+{% block content %}
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <a href="/">← Back to catalogue</a>
+</nav>
+
+<section class="product-hero">
+  <figure class="product-hero__image cat-{{ product.category | replace(' ', '-') }}">
+    {% if product.product_id in available_images %}
+      <img class="product-hero__image-photo"
+           src="{{ url_for('static', filename='images/' ~ product.product_id ~ '.jpg') }}"
+           alt="{{ product.product_name }}">
+    {% else %}
+      <div class="product-hero__image-top">
+        <span>{{ product.category }}</span>
+        <span>№ {{ "%04d"|format(product.product_id) }}</span>
+      </div>
+      <div class="product-hero__image-mark">{{ product.product_name }}</div>
+    {% endif %}
+  </figure>
+
+  <div class="product-hero__body">
+    <div class="product-hero__category">{{ product.category }}</div>
+    <h1 class="product-hero__name">{{ product.product_name }}</h1>
+    <div class="product-hero__price"><small>AUD</small>${{ "%.2f"|format(product.price) }}</div>
+
+    {% if aspects %}
+    <div class="aspects" style="border-top:1px solid var(--line); padding-top:24px; margin-bottom: 24px;">
+      <span class="aspects__label">Customers mention</span>
+      {% for term in aspects %}
+        <span class="aspect-pill">{{ term }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="product-hero__cta">
+      <a href="{{ url_for('review_form', product_id=product.product_id) }}"
+         class="btn btn--accent">Write a review</a>
+    </div>
+  </div>
+</section>
+
+{% if similar %}
+<section class="similar">
+  <div class="section-title">
+    <h2>Similar items</h2>
+    <span class="section-title__meta">Ranked by similarity</span>
+  </div>
+  <div class="similar-grid">
+    {% for s in similar %}
+      {{ similar_card(s) }}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="reviews">
+  <div class="reviews__heading">
+    <h2>{% if reviews %}{{ reviews|length }} review{{ 's' if reviews|length != 1 else '' }}{% else %}Reviews{% endif %}</h2>
+    <p>Real shoppers, real opinions — with machine-learnt label suggestions.</p>
+  </div>
+
+  <div class="reviews__list">
+    {% if reviews %}
+      {% for r in reviews %}
+      <article class="review">
+        <div class="review__meta">
+          <strong>{{ r.user_id }}</strong>
+          {{ r.review_date }}
+        </div>
+        <div>
+          {{ stars(r.rating) }}
+          {% if r.title %}
+            <h3 class="review__title">{{ r.title }}</h3>
+          {% endif %}
+          <p class="review__text">{{ r.review_text }}</p>
+          {% if r.predicted_label is defined and r.predicted_label == r.predicted_label %}
+            {# Jinja-safe NaN check — NaN != NaN. #}
+            <div class="review__label">
+              Label: {{ "Would buy" if r.predicted_label|int == 1 else "Would not buy" }}
+            </div>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    {% else %}
+      <div class="no-reviews">
+        <em>No reviews yet.</em>
+        <p>Be the first to share your experience.</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

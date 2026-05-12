@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card with context %}
+{% block title %}Search · Maison de Beauté{% endblock %}
+
+{% block content %}
+
+{% if total == 0 %}
+  <section class="empty-state">
+    <h1>0 products matched{% if q %} <em>“{{ q }}”</em>{% endif %}</h1>
+    <p>Try a different keyword — a brand name, a category, or a product type. The search is typo-tolerant.</p>
+  </section>
+{% else %}
+  <header class="search-headline">
+    <h1>{{ total }} products matched <em>“{{ q }}”</em></h1>
+    <span class="search-headline__count">Ranked by relevance</span>
+  </header>
+
+  <section class="product-grid">
+    {% for p in results %}
+      {{ product_card(p) }}
+    {% endfor %}
+  </section>
+{% endif %}
+
+{% endblock %}

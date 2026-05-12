@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_card with context %}
+{% block title %}Catalogue · Maison de Beauté{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+  <div>
+    <div class="hero__eyebrow">Volume 01 · Spring 2026</div>
+    <h1 class="hero__title">Beauty,<br><em>studied.</em></h1>
+    <p class="hero__lede">
+      A curated catalogue of skincare, makeup, fragrance, hair and tools —
+      each indexed for typo-tolerant search, similarity recommendations,
+      and machine-learnt label suggestions on every new review.
+    </p>
+  </div>
+  <aside class="hero__meta">
+    <strong>{{ total }} products</strong>
+    <span>across 5 categories</span>
+    <span>updated continuously by our shoppers</span>
+  </aside>
+</section>
+
+<nav class="cat-strip" aria-label="Categories">
+  <a class="cat-pill" href="/category/skincare"><span class="cat-pill__dot" style="background:var(--tint-skincare-b)"></span>Skincare</a>
+  <a class="cat-pill" href="/category/makeup"><span class="cat-pill__dot" style="background:var(--tint-makeup-b)"></span>Makeup</a>
+  <a class="cat-pill" href="/category/fragrance"><span class="cat-pill__dot" style="background:var(--tint-fragrance-b)"></span>Fragrance</a>
+  <a class="cat-pill" href="/category/beauty-tools"><span class="cat-pill__dot" style="background:var(--tint-tools-b)"></span>Beauty Tools</a>
+  <a class="cat-pill" href="/category/haircare"><span class="cat-pill__dot" style="background:var(--tint-haircare-b)"></span>Haircare</a>
+</nav>
+
+{% for section in featured %}
+<section class="cat-section">
+  <div class="section-title">
+    <h2>{{ section.name }}</h2>
+    <a class="section-title__see-more"
+       href="{{ url_for('category', slug=section.slug) }}">
+      See all {{ section.total }} →
+    </a>
+  </div>
+  <div class="product-grid product-grid--row">
+    {% for p in section.products %}
+      {{ product_card(p) }}
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+
+{% endblock %}
