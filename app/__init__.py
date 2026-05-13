@@ -153,6 +153,7 @@ def create_app(
       Defaults to ``./data``; tests pass a ``tmp_path`` per test.
     """
     app = Flask(__name__)
+    app.secret_key = "dev-secret-key-change-in-prod"
     app.register_blueprint(admin_bp)
     # --- Build the read-only catalogue + reviews state ---
     data_dir = Path(data_dir) if data_dir is not None else _DEFAULT_DATA_DIR
@@ -332,18 +333,20 @@ def create_app(
         # Branch 1: commit step — predicted_label is in the form, meaning
         # the user clicked "confirm" on the predicted-label page. Persist
         # the review and redirect.
-        if "predicted_label" in request.form:
+        if "final_label" in request.form:
             try:
-                label = int(request.form["predicted_label"])
-                if label not in (0, 1):
+                final_label = int(request.form["final_label"])
+                model_pred  = int(request.form.get("model_prediction", final_label))
+                if final_label not in (0, 1) or model_pred not in (0, 1):
                     raise ValueError
             except ValueError:
-                # Malformed predicted_label — re-run the predict step.
-                label = None
-            if label is not None:
+                final_label = None
+            if final_label is not None:
                 new_review = review_store.append(
                     product_id=product_id, rating=rating,
-                    review_text=review_text, title=title, predicted_label=label,
+                    review_text=review_text, title=title,
+                    predicted_label=model_pred,
+                    final_label=final_label,
                 )
                 # Insert at the head so the just-posted review appears
                 # first on the product page (spec §7.7 ordering).
