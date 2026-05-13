@@ -1,87 +1,35 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin Dashboard</title>
+{% extends "admin_base.html" %}
+{% block title %}Dashboard · Admin{% endblock %}
 
-    <style>
-        body {
-            font-family: Arial;
-            margin: 40px;
-            background: #f4f4f4;
-        }
+{% block content %}
+<h1 class="page-heading">Dashboard</h1>
 
-        .container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-        }
+<div class="stat-grid">
 
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+  <a class="stat-card" href="{{ url_for('index') }}">
+    <div class="stat-card__label">Total Products</div>
+    <div class="stat-card__value">{{ total_products }}</div>
+  </a>
 
-        h1 {
-            margin-bottom: 30px;
-        }
-    </style>
-</head>
-<body>
+  <a class="stat-card" href="{{ url_for('admin.review_moderation') }}">
+    <div class="stat-card__label">Reviews</div>
+    <div class="stat-card__value">{{ total_reviews }}</div>
+    <div class="stat-card__sub">All submitted reviews</div>
+  </a>
 
-<h1>Administrator Dashboard</h1>
-<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+  <a class="stat-card" href="{{ url_for('admin.overridden_reviews') }}">
+    <div class="stat-card__label">Label Corrections</div>
+    <div class="stat-card__value">{{ overrides_count }}</div>
+    <div class="stat-card__sub">User-overridden labels</div>
+  </a>
 
-    <a href="/admin">
-        <button>Dashboard</button>
-    </a>
 
-    <a href="/admin/reviews">
-        <button>Reviews</button>
-    </a>
+  <a class="stat-card" href="{{ url_for('admin.statistics') }}">
+    <div class="stat-card__label">Statistics</div>
+    <div class="stat-card__value stat-card__value--icon">📊</div>
+    <div class="stat-card__sub">Buy rate & avg rating</div>
+  </a>
 
-    <a href="/admin/overrides">
-        <button>Overrides</button>
-    </a>
-
-    <a href="/admin/inconsistent">
-        <button>Inconsistent</button>
-    </a>
-
-    <a href="/admin/analytics">
-        <button>Analytics</button>
-    </a>
 
 </div>
-<div class="container">
-
-    <div class="card">
-        <h2>Total Products</h2>
-        <h1>{{ total_products }}</h1>
-    </div>
-
-    <div class="card">
-        <h2>Total Reviews</h2>
-        <h1>{{ total_reviews }}</h1>
-    </div>
-
-    <div class="card">
-        <h2>Average Rating</h2>
-        <h1>{{ avg_rating }}</h1>
-    </div>
-
-    <div class="card">
-        <h2>Buy Reviews</h2>
-        <h1>{{ buy_count }}</h1>
-    </div>
-
-    <div class="card">
-        <h2>Not Buy Reviews</h2>
-        <h1>{{ not_buy_count }}</h1>
-    </div>
-
-</div>
-
-</body>
-</html>
+{% endblock %}

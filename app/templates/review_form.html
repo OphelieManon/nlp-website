@@ -17,10 +17,14 @@
 
   {% if predicted %}
     {% set label_text = "Would buy" if predicted.label == 1 else "Would not buy" %}
-    <div class="predict-banner">
-      <span>Our classifier predicts</span>
-      <strong>{{ label_text }}</strong>
-      <span class="predict-banner__conf">· {{ "%.0f%%"|format(predicted.proba * 100) }} confidence</span>
+    {% set banner_mod = "buy" if predicted.label == 1 else "notbuy" %}
+    <div class="predict-banner predict-banner--{{ banner_mod }}">
+      <div class="predict-banner__icon">{{ "✓" if predicted.label == 1 else "✕" }}</div>
+      <div class="predict-banner__body">
+        <span class="predict-banner__label">Our classifier predicts</span>
+        <strong class="predict-banner__verdict">{{ label_text }}</strong>
+      </div>
+      <span class="predict-banner__conf">{{ "%.0f%%"|format(predicted.proba * 100) }} confidence</span>
     </div>
   {% endif %}
 
@@ -55,13 +59,17 @@
     </div>
 
     {% if predicted %}
+      {# Carry the model's raw output so the route can save it as predicted_label
+         separately from the user's final choice (final_label). #}
+      <input type="hidden" name="model_prediction" value="{{ predicted.label }}">
+
       <div class="field">
-        <span class="field__label">Label · override if you disagree</span>
+        <span class="field__label">Suggested label · change if needed</span>
         <div class="label-radio-group">
-          <input type="radio" name="predicted_label" id="label-1" value="1"
+          <input type="radio" name="final_label" id="label-1" value="1"
                  {% if predicted.label == 1 %}checked{% endif %}>
           <label for="label-1">Would buy</label>
-          <input type="radio" name="predicted_label" id="label-0" value="0"
+          <input type="radio" name="final_label" id="label-0" value="0"
                  {% if predicted.label == 0 %}checked{% endif %}>
           <label for="label-0">Would not buy</label>
         </div>

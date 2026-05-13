@@ -35,7 +35,7 @@ import pandas as pd
 # with this exact column order).
 _COLUMNS = [
     "review_id", "product_id", "user_id", "rating", "review_text",
-    "review_date", "title", "predicted_label",
+    "review_date", "title", "predicted_label", "final_label",
 ]
 
 
@@ -49,30 +49,14 @@ class ReviewStore:
     """
 
     def __init__(self, data_dir: Path | str, knowledge_dir: Path | str) -> None:
-        self._data_csv = Path(data_dir) / "reviews.csv"
-        self._knowledge_csv = Path(knowledge_dir) / "reviews.csv"
-        # Initialise the counter from existing U_guest_<n> values so
-        # it survives process restarts — otherwise two reviews
-        # submitted in separate Flask runs would both become
-        # U_guest_1, breaking the user_id uniqueness invariant.
+        self._data_csv = Path(data_dir) / "user_analysis_classification.csv"
         self._user_counter = _it.count(self._max_guest_seq() + 1)
 
-    def _source(self) -> Path:
-        # data/ wins if it exists (subsequent loads of the app see
-        # the new reviews); otherwise the knowledge/ seed file is
-        # the read source.
-        return self._data_csv if self._data_csv.exists() else self._knowledge_csv
-
     def _read(self) -> pd.DataFrame:
-        """Read the current reviews CSV and forward-migrate the schema."""
-        df = pd.read_csv(self._source())
-        # Add the M2-introduced columns if the file predates them.
-        if "title" not in df.columns:
-            df["title"] = ""
-        if "predicted_label" not in df.columns:
-            df["predicted_label"] = pd.NA
-        # Re-order to the canonical column list.
-        return df[_COLUMNS]
+        """Read user_analysis_classification.csv, or return empty DataFrame on cold start."""
+        if not self._data_csv.exists():
+            return pd.DataFrame(columns=_COLUMNS)
+        return pd.read_csv(self._data_csv)
 
     def _max_guest_seq(self) -> int:
         """Largest existing U_guest_<n> integer suffix, or 0 if none."""
@@ -98,6 +82,7 @@ class ReviewStore:
         review_text: str,
         title: str,
         predicted_label: int,
+        final_label: int,
     ) -> dict:
         """Append a new review row to the CSV and return the row as a dict.
 
@@ -123,6 +108,7 @@ class ReviewStore:
             "review_date": _dt.date.today().isoformat(),
             "title": title,
             "predicted_label": int(predicted_label),
+            "final_label": int(final_label),
         }
         df = self._read()
         out = pd.concat([df, pd.DataFrame([new_row], columns=_COLUMNS)], ignore_index=True)
