@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Moderation</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            margin: 40px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background: #333;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Review Moderation</h1>
+
+<table>
+
+    <tr>
+        <th>Product</th>
+        <th>Rating</th>
+        <th>Prediction</th>
+        <th>Final Label</th>
+        <th>Review</th>
+    </tr>
+
+    {% for review in reviews %}
+    <tr>
+        <td>{{ review.product_title }}</td>
+        <td>{{ review.rating }}</td>
+        <td>{{ review.predicted_label }}</td>
+        <td>{{ review.final_label }}</td>
+        <td>{{ review.review_text }}</td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+</body>
+</html>

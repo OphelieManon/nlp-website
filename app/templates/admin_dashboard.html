@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            margin: 40px;
+            background: #f4f4f4;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Administrator Dashboard</h1>
+<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+
+    <a href="/admin">
+        <button>Dashboard</button>
+    </a>
+
+    <a href="/admin/reviews">
+        <button>Reviews</button>
+    </a>
+
+    <a href="/admin/overrides">
+        <button>Overrides</button>
+    </a>
+
+    <a href="/admin/inconsistent">
+        <button>Inconsistent</button>
+    </a>
+
+    <a href="/admin/analytics">
+        <button>Analytics</button>
+    </a>
+
+</div>
+<div class="container">
+
+    <div class="card">
+        <h2>Total Products</h2>
+        <h1>{{ total_products }}</h1>
+    </div>
+
+    <div class="card">
+        <h2>Total Reviews</h2>
+        <h1>{{ total_reviews }}</h1>
+    </div>
+
+    <div class="card">
+        <h2>Average Rating</h2>
+        <h1>{{ avg_rating }}</h1>
+    </div>
+
+    <div class="card">
+        <h2>Buy Reviews</h2>
+        <h1>{{ buy_count }}</h1>
+    </div>
+
+    <div class="card">
+        <h2>Not Buy Reviews</h2>
+        <h1>{{ not_buy_count }}</h1>
+    </div>
+
+</div>
+
+</body>
+</html>

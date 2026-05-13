@@ -501,4 +501,12 @@ review_id,product_id,user_id,rating,review_text,review_date,title,predicted_labe
 500,773,U500,5,I would definitely buy this again.,2026-01-28,,
 501,919,U_guest_1,4,"The product is so so good, my hair is all shiny and silky every time I use it. Totally recommend!!",2026-05-13,Awesome!!,1.0
 502,122,U_guest_2,4,Weird smell,2026-05-13,Smelly,0.0
+<<<<<<< HEAD
+503,101,U_guest_3,5,The cream feels very comfortable on my face. The price is also very affordable,2026-05-13,Decent product,1.0
+504,107,U_guest_4,1,This product sucks,2026-05-13,Horrible,0.0
+505,107,U_guest_5,4,I like this product,2026-05-13,Love it,0.0
+506,204,U_guest_6,2,Terrible Product,2026-05-13,Spoiled,0.0
+507,204,U_guest_7,1,I would never buy this,2026-05-13,Terrible,1.0
+=======
 503,116,U_guest_3,4,Very good I love it,2026-05-13,Good product,1.0
+>>>>>>> 0590de2a4955ebce1e5b03c219ac841dfd91ec1a

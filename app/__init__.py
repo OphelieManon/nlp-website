@@ -51,6 +51,7 @@ from app.nlp.classifier import ReviewClassifier
 from app.nlp.data_loader import load_products, load_reviews
 from app.nlp.review_store import ReviewStore
 from app.nlp.search import SearchIndex
+from app.admin_routes import admin_bp
 
 # Repo-root-anchored paths. Computed once at import time so every
 # subsequent call to create_app() uses the same locations.
@@ -152,7 +153,7 @@ def create_app(
       Defaults to ``./data``; tests pass a ``tmp_path`` per test.
     """
     app = Flask(__name__)
-
+    app.register_blueprint(admin_bp)
     # --- Build the read-only catalogue + reviews state ---
     data_dir = Path(data_dir) if data_dir is not None else _DEFAULT_DATA_DIR
     products = load_products()

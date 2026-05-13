@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Analytics</title>
+
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+<h1>Analytics Dashboard</h1>
+
+<h2>Most Searched Brands</h2>
+<div id="brand_chart"></div>
+
+<h2>Highest Rated Products</h2>
+<div id="product_chart"></div>
+
+<h2>Buy / Not Buy Distribution</h2>
+<div id="prediction_chart"></div>
+
+<script>
+
+Plotly.newPlot("brand_chart", [{
+    x: {{ brand_labels | tojson }},
+    y: {{ brand_values | tojson }},
+    type: 'bar'
+}]);
+
+Plotly.newPlot("product_chart", [{
+    x: {{ product_labels | tojson }},
+    y: {{ product_values | tojson }},
+    type: 'bar'
+}]);
+
+Plotly.newPlot("prediction_chart", [{
+    labels: {{ prediction_labels | tojson }},
+    values: {{ prediction_values | tojson }},
+    type: 'pie'
+}]);
+
+</script>
+
+</body>
+</html>
