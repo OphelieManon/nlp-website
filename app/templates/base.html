@@ -1,57 +1,76 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Maison — Cosmetics &amp; Beauty{% endblock %}</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      {% block title %}Maison — Cosmetics &amp; Beauty{% endblock %}
+    </title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,30..100;1,9..144,300..900,30..100&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,30..100;1,9..144,300..900,30..100&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell site-header__inner">
+        <a class="brand" href="/">Maison <em>de Beauté</em></a>
+        <form class="search-form" action="/search" method="get" role="search">
+          <input
+            type="search"
+            name="q"
+            value="{{ request.args.get('q', '') }}"
+            placeholder="Search products"
+            aria-label="Search"
+            maxlength="200"
+          />
+          <button class="btn btn--primary" type="submit">Search</button>
+        </form>
+      </div>
+    </header>
 
-<header class="site-header">
-  <div class="shell site-header__inner">
-    <a class="brand" href="/">Maison <em>de Beauté</em></a>
-    <form class="search-form" action="/search" method="get" role="search">
-      <input type="search" name="q"
-             value="{{ request.args.get('q', '') }}"
-             placeholder="Search products"
-             aria-label="Search"
-             maxlength="200">
-      <button class="btn btn--primary" type="submit">Search</button>
-    </form>
-  </div>
-</header>
+    <main>
+      <div class="shell">{% block content %}{% endblock %}</div>
+    </main>
 
-<main>
-  <div class="shell">
-    {% block content %}{% endblock %}
-  </div>
-</main>
-
-<footer class="site-footer">
-  <div class="shell site-footer__inner">
-    <div>
-      <div class="site-footer__brand">Maison <em>de Beauté</em></div>
-      <p>Cosmetics and beauty, studied. A curated catalogue of {{ '1000' }} products with shopper-submitted reviews and machine-learnt label suggestions.</p>
-    </div>
-    <div>
-      <h3>Group</h3>
-      <p>TODO — group name</p>
-    </div>
-    <div>
-      <h3>Coursework</h3>
-      <p>RMIT COSC3801 / 3015<br>Advanced Programming for Data Science<br>Assignment 3 · Milestone II</p>
-    </div>
-  </div>
-  <div class="shell site-footer__legal">
-    © 2026 Maison de Beauté — coursework demonstrator
-  </div>
-</footer>
-
-</body>
+    <footer class="site-footer">
+      <div class="shell site-footer__inner">
+        <div>
+          <div class="site-footer__brand">Maison <em>de Beauté</em></div>
+          <p>
+            Cosmetics and beauty, studied. A curated catalogue of {{ '1000' }}
+            products with shopper-submitted reviews and machine-learnt label
+            suggestions.
+          </p>
+        </div>
+        <div>
+          <h3>Group</h3>
+          <p>
+            Nam Nguyen Phuong - 3941773<br />
+            Tran Ophelie Manon - 3968993<br />
+            Matt Do - 4232487<br />
+            Yoshita Sarin - 4225113
+          </p>
+        </div>
+        <div>
+          <h3>Coursework</h3>
+          <p>
+            RMIT COSC3801 / 3015<br />Advanced Programming for Data Science<br />Assignment
+            3 · Milestone II
+          </p>
+        </div>
+      </div>
+      <div class="shell site-footer__legal">
+        © 2026 Maison de Beauté — coursework demonstrator
+      </div>
+    </footer>
+  </body>
 </html>
