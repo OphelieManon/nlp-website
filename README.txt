@@ -10,10 +10,10 @@ README.md in the same folder, or visit the repository's GitHub page.
 
 Group members
 -------------
-- TODO: Name 1 — sxxxxxxx
-- TODO: Name 2 — sxxxxxxx
-- TODO: Name 3 — sxxxxxxx
-- TODO: Name 4 — sxxxxxxx
+Nam Nguyen Phuong - 3941773
+Tran Ophelie Manon - 3968993
+Matt Do - 4232487
+Yoshita Sarin - 4225113
 
 OneDrive (files > 50 MB, if any)
 --------------------------------
