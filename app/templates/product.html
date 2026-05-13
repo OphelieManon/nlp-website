@@ -25,8 +25,14 @@
 
   <div class="product-hero__body">
     <div class="product-hero__category">{{ product.category }}</div>
+
     <h1 class="product-hero__name">{{ product.product_name }}</h1>
-    <div class="product-hero__price"><small>AUD</small>${{ "%.2f"|format(product.price) }}</div>
+
+    {% if product.description %}
+      <p class="product-hero__description">
+        {{ product.description }}
+      </p>
+    {% endif %}
 
     {% if aspects %}
     <div class="aspects" style="border-top:1px solid var(--line); padding-top:24px; margin-bottom: 24px;">
@@ -36,6 +42,10 @@
       {% endfor %}
     </div>
     {% endif %}
+    
+    <div class="product-hero__price">
+      <small>AUD</small>${{ "%.2f"|format(product.price) }}
+    </div>
 
     <div class="product-hero__cta">
       <a href="{{ url_for('review_form', product_id=product.product_id) }}"
@@ -50,6 +60,7 @@
     <h2>Similar items</h2>
     <span class="section-title__meta">Ranked by similarity</span>
   </div>
+
   <div class="similar-grid">
     {% for s in similar %}
       {{ similar_card(s) }}
@@ -60,7 +71,14 @@
 
 <section class="reviews">
   <div class="reviews__heading">
-    <h2>{% if reviews %}{{ reviews|length }} review{{ 's' if reviews|length != 1 else '' }}{% else %}Reviews{% endif %}</h2>
+    <h2>
+      {% if reviews %}
+        {{ reviews|length }} review{{ 's' if reviews|length != 1 else '' }}
+      {% else %}
+        Reviews
+      {% endif %}
+    </h2>
+
     <p>Real shoppers, real opinions — with machine-learnt label suggestions.</p>
   </div>
 
@@ -72,12 +90,16 @@
           <strong>{{ r.user_id }}</strong>
           {{ r.review_date }}
         </div>
+
         <div>
           {{ stars(r.rating) }}
+
           {% if r.title %}
             <h3 class="review__title">{{ r.title }}</h3>
           {% endif %}
+
           <p class="review__text">{{ r.review_text }}</p>
+
           {% if r.predicted_label is defined and r.predicted_label == r.predicted_label %}
             {# Jinja-safe NaN check — NaN != NaN. #}
             <div class="review__label">
