@@ -1,44 +1,47 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Analytics</title>
+{% extends "admin_base.html" %}
+{% block title %}Analytics · Admin{% endblock %}
 
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-</head>
-<body>
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
 
-<h1>Analytics Dashboard</h1>
+{% block content %}
+<a href="{{ url_for('admin.admin_dashboard') }}"
+   style="display:inline-flex; align-items:center; gap:6px; font-size:0.875rem; color:#888; text-decoration:none; margin-bottom:20px;">
+  ← Back to Dashboard
+</a>
 
-<h2>Most Searched Brands</h2>
-<div id="brand_chart"></div>
+<h1 class="page-heading">Analytics</h1>
 
-<h2>Highest Rated Products</h2>
-<div id="product_chart"></div>
+<div style="display:grid; gap:32px;">
 
-<h2>Buy / Not Buy Distribution</h2>
-<div id="prediction_chart"></div>
+  <div style="background:#fff; border-radius:12px; padding:28px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <h2 style="font-size:1rem; font-weight:600; margin-bottom:16px;">Highest Rated Products</h2>
+    <div id="product_chart"></div>
+  </div>
+
+  <div style="background:#fff; border-radius:12px; padding:28px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <h2 style="font-size:1rem; font-weight:600; margin-bottom:16px;">Buy / Would Not Buy Distribution</h2>
+    <div id="prediction_chart"></div>
+  </div>
+
+</div>
 
 <script>
-
-Plotly.newPlot("brand_chart", [{
-    x: {{ brand_labels | tojson }},
-    y: {{ brand_values | tojson }},
-    type: 'bar'
-}]);
+const layout = { margin: { t: 10, l: 40, r: 20, b: 60 }, paper_bgcolor: "transparent", plot_bgcolor: "transparent" };
 
 Plotly.newPlot("product_chart", [{
-    x: {{ product_labels | tojson }},
-    y: {{ product_values | tojson }},
-    type: 'bar'
-}]);
+  x: {{ product_labels | tojson }},
+  y: {{ product_values | tojson }},
+  type: "bar",
+  marker: { color: "#1a1a1a" }
+}], layout);
 
 Plotly.newPlot("prediction_chart", [{
-    labels: {{ prediction_labels | tojson }},
-    values: {{ prediction_values | tojson }},
-    type: 'pie'
-}]);
-
+  labels: {{ prediction_labels | tojson }},
+  values: {{ prediction_values | tojson }},
+  type: "pie",
+  marker: { colors: ["#4a9e6b", "#c0392b"] }
+}], { margin: { t: 10 }, paper_bgcolor: "transparent" });
 </script>
-
-</body>
-</html>
+{% endblock %}
