@@ -80,7 +80,9 @@
           {{ stars(r.rating) }}
 
           {% if r.title %}
-            <h3 class="review__title">{{ r.title }}</h3>
+            <a href="{{ url_for('review_detail', product_id=product.product_id, review_id=r.review_id) }}" class="review__title-link" style="text-decoration: none; color: inherit;">
+              <h3 class="review__title" style="margin: 0; display: inline-block;">{{ r.title }}</h3>
+            </a>
           {% endif %}
 
           <p class="review__text">{{ r.review_text }}</p>
