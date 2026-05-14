@@ -85,16 +85,14 @@ def load_product_stats() -> pd.DataFrame:
     return df.drop_duplicates(subset="product_id").reset_index(drop=True)
 
 
-def load_reviews(data_dir: Path | None = None) -> pd.DataFrame:
-    """Load reviews.csv (seed + any posted-via-the-form reviews).
+def load_reviews(data_dir):
+    df1 = pd.read_csv(data_dir / "reviews.csv")
 
-    Injects an empty ``title`` column if the source CSV doesn't
-    have one — the seed `knowledge/reviews.csv` predates the title
-    field added in Milestone 2, so we normalise the schema at read
-    time. This means downstream code (templates, AspectExtractor,
-    ReviewStore) can rely on the title column always existing.
-    """
-    df = pd.read_csv(_resolve("reviews.csv", data_dir))
-    if "title" not in df.columns:
-        df["title"] = ""
+    new_path = data_dir / "user_analysis_classification.csv"
+    if new_path.exists():
+        df2 = pd.read_csv(new_path)
+        df = pd.concat([df1, df2], ignore_index=True)
+    else:
+        df = df1
+
     return df
