@@ -54,10 +54,18 @@ def download_image(session, image_url, dest_path):
             f.write(chunk)
 
 
+IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+
+
+def is_direct_image_url(url):
+    path = urlparse(url).path
+    return os.path.splitext(path)[1].lower() in IMAGE_EXTS
+
+
 def image_extension(url):
     path = urlparse(url).path
     ext = os.path.splitext(path)[1].lower()
-    return ext if ext in {".jpg", ".jpeg", ".png", ".webp", ".gif"} else ".jpg"
+    return ext if ext in IMAGE_EXTS else ".jpg"
 
 
 def main():
@@ -80,8 +88,13 @@ def main():
             continue
 
         try:
-            print(f"[{i}/{total}] {product_id}: fetching page...", end=" ", flush=True)
-            image_url = get_image_url(session, page_url)
+            # If the URL is already a direct image, download it without scraping
+            if is_direct_image_url(page_url):
+                print(f"[{i}/{total}] {product_id}: direct image URL...", end=" ", flush=True)
+                image_url = page_url
+            else:
+                print(f"[{i}/{total}] {product_id}: fetching page...", end=" ", flush=True)
+                image_url = get_image_url(session, page_url)
 
             if not image_url:
                 print("no image found")
