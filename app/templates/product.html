@@ -28,6 +28,21 @@
 
     <h1 class="product-hero__name">{{ product.product_name }}</h1>
 
+    {% if reviews %}
+    {% set avg_rating = (reviews | sum(attribute='rating')) / (reviews | length) %}
+
+    <div class="product-hero__rating">
+      {{ stars(avg_rating) }}
+      <span class="product-hero__rating-text">
+        {{ "%.1f"|format(avg_rating) }} / 5 
+      </span>
+    </div>
+    {% else %}
+      <div class="product-hero__rating">
+        <span class="product-hero__rating-text">No ratings yet</span>
+      </div>
+    {% endif %}
+
     {% if product.description %}
       <p class="product-hero__description">
         {{ product.description }}
