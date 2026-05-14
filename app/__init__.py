@@ -365,6 +365,59 @@ def create_app(
             form={"title": title, "rating": rating, "review_text": review_text},
             predicted={"label": pred_label, "proba": proba},
         )
+    
+    # ------------------------------------------------------------------
+    # Route: individual review detail page. Required by Task 2's
+    # specification that submitted reviews must be "accessible via URL".
+    #
+    # Displays:
+    # - the associated product information
+    # - the review title + body text
+    # - the numeric rating
+    # - the classifier-generated Buy / Not Buy label
+    #
+    # The route uses BOTH the product_id and review_id in the URL:
+    #   /product/<product_id>/review/<review_id>
+    #
+    # This keeps review URLs human-readable and logically nested under
+    # the product they belong to.
+    #
+    # Validation:
+    # - 404 if the product does not exist
+    # - 404 if the review does not exist
+    # - 404 if the review does not belong to the specified product
+    #
+    # Reviews are loaded from the CSV-backed review store so newly
+    # submitted reviews become immediately accessible without restarting
+    # the application.
+    # ------------------------------------------------------------------
+    @app.route("/product/<int:product_id>/review/<int:review_id>")
+    def review_detail(product_id: int, review_id: int):
+
+        reviews = load_reviews(data_dir=data_dir)
+
+        row = reviews[
+            (reviews["product_id"] == product_id) &
+            (reviews["review_id"] == review_id)
+        ]
+
+        if row.empty:
+            abort(404)
+
+        review = row.iloc[0].to_dict()
+
+        product_row = products[products["product_id"] == product_id]
+
+        if product_row.empty:
+            abort(404)
+
+        product = product_row.iloc[0].to_dict()
+
+        return render_template(
+            "review_detail.html",
+            product=product,
+            review=review
+        )
 
     return app
 

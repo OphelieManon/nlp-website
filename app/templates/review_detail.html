@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <a href="{{ url_for('product_detail',
+        product_id=product.product_id) }}">
+        ← Back to product
+    </a>
+
+    <h1>{{ review.title }}</h1>
+
+    <p>
+        Product:
+        {{ product.product_name }}
+    </p>
+
+    <p>
+        Rating:
+        {{ review.rating }}/5
+    </p>
+
+    <p>
+        Review: 
+        {{ review.review_text }}
+    </p>
+
+    <p>
+        Prediction:
+        {% if review.predicted_label == 1 %}
+            Would Buy
+        {% else %}
+            Would Not Buy
+        {% endif %}
+    </p>
+
+</div>
+
+{% endblock %}
