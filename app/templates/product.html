@@ -44,7 +44,7 @@
     {% endif %}
     
     <div class="product-hero__price">
-      <small>AUD</small>${{ "%.2f"|format(product.price) }}
+      ${{ "%.2f"|format(product.price) }}
     </div>
 
     <div class="product-hero__cta">
@@ -53,21 +53,6 @@
     </div>
   </div>
 </section>
-
-{% if similar %}
-<section class="similar">
-  <div class="section-title">
-    <h2>Similar items</h2>
-    <span class="section-title__meta">Ranked by similarity</span>
-  </div>
-
-  <div class="similar-grid">
-    {% for s in similar %}
-      {{ similar_card(s) }}
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
 
 <section class="reviews">
   <div class="reviews__heading">
@@ -117,5 +102,20 @@
     {% endif %}
   </div>
 </section>
+
+{% if similar %}
+<section class="similar">
+  <div class="section-title">
+    <h2>Similar items</h2>
+    <span class="section-title__meta">Ranked by similarity</span>
+  </div>
+
+  <div class="similar-grid">
+    {% for s in similar %}
+      {{ similar_card(s) }}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
 
 {% endblock %}

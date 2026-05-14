@@ -469,7 +469,7 @@ p { margin: 0 0 1em; }
   color: var(--ink-soft);
 }
 .card__price::before {
-  content: "AUD ";
+  content: "";
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
