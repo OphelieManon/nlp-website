@@ -1,0 +1,237 @@
+{% extends "admin_base.html" %}
+{% block title %}Statistics · Admin{% endblock %}
+
+{% block head %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.admin_dashboard') }}"
+   style="display:inline-flex; align-items:center; gap:6px; font-size:0.875rem; color:#888; text-decoration:none; margin-bottom:20px;">
+  ← Back to Dashboard
+</a>
+
+<h1 class="page-heading">Statistic Analysis</h1>
+
+<div class="stat-grid" style="margin-bottom:32px;">
+  <div class="stat-card" style="background:#FFFBEB; border-left:4px solid #F59E0B;">
+    <div class="stat-card__label" style="color:#92400E;">Average Rating</div>
+    <div class="stat-card__value" style="color:#B45309;">{{ avg_rating }}</div>
+    <div class="stat-card__sub" style="color:#92400E;">out of 5</div>
+  </div>
+  <div class="stat-card" style="background:#F0FDF4; border-left:4px solid #16A34A;">
+    <div class="stat-card__label" style="color:#166534;">Would Buy</div>
+    <div class="stat-card__value" style="color:#15803D;">{{ buy_count }}</div>
+    <div class="stat-card__sub" style="color:#166534;">{{ buy_pct }}% of {{ total }} reviews</div>
+  </div>
+  <div class="stat-card" style="background:#FEF2F2; border-left:4px solid #DC2626;">
+    <div class="stat-card__label" style="color:#991B1B;">Would Not Buy</div>
+    <div class="stat-card__value" style="color:#B91C1C;">{{ not_buy_count }}</div>
+    <div class="stat-card__sub" style="color:#991B1B;">{{ not_buy_pct }}% of {{ total }} reviews</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+
+  <div style="background:#fff; border-radius:12px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <div style="font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:#888; margin-bottom:4px;">
+      Buy vs Would Not Buy
+    </div>
+    <div id="donut_chart"></div>
+  </div>
+
+  <div style="background:#fff; border-radius:12px; padding:24px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <div style="font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:#888; margin-bottom:4px;">
+      Average Rating
+    </div>
+    <div id="gauge_chart"></div>
+  </div>
+
+</div>
+
+<script>
+const transparent = "transparent";
+
+const layout_base = {
+  paper_bgcolor: transparent,
+  plot_bgcolor: transparent,
+  margin: { t: 20, b: 20, l: 20, r: 20 },
+  font: { family: "Manrope, Arial, sans-serif" }
+};
+
+const avgRating = Number({{ avg_rating | default(0) | tojson }});
+const buyCount = Number({{ buy_count | default(0) | tojson }});
+const notBuyCount = Number({{ not_buy_count | default(0) | tojson }});
+
+const ratingColor =
+  avgRating < 2 ? "#DC2626" :
+  avgRating < 3.5 ? "#F59E0B" :
+  "#16A34A";
+
+Plotly.newPlot("donut_chart", [{
+  labels: ["Would Buy", "Would Not Buy"],
+  values: [buyCount, notBuyCount],
+  type: "pie",
+  hole: 0.55,
+  marker: { colors: ["#4a9e6b", "#c0392b"] },
+  textinfo: "label+percent",
+  hovertemplate: "%{label}: %{value} reviews<extra></extra>"
+}], {
+  ...layout_base,
+  showlegend: false,
+  height: 280
+}, { responsive: true });
+
+Plotly.newPlot("gauge_chart", [{
+  type: "indicator",
+  mode: "gauge+number",
+  value: avgRating,
+  number: {
+    suffix: " / 5",
+    font: { size: 36 }
+  },
+  gauge: {
+    axis: {
+      range: [0, 5],
+      tickwidth: 1,
+      tickcolor: "#ccc",
+      tickvals: [1, 2, 3, 4, 5]
+    },
+    bar: {
+      color: ratingColor,
+      thickness: 0.25
+    },
+    bgcolor: "#f5f5f4",
+    borderwidth: 0,
+    steps: [
+      { range: [0, 2], color: "#FECACA" },
+      { range: [2, 3.5], color: "#FDE68A" },
+      { range: [3.5, 5], color: "#BBF7D0" }
+    ],
+    threshold: {
+      line: { color: ratingColor, width: 3 },
+      thickness: 0.75,
+      value: avgRating
+    }
+  }
+}], {
+  ...layout_base,
+  height: 280
+}, { responsive: true });
+</script>
+
+<div style="margin-top:32px;">
+  <div style="font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:#888; margin-bottom:16px;">
+    Top 10 Highest Rated Products
+  </div>
+  {% if top_products %}
+  <div class="table-wrapper">
+    <table id="top10-table">
+      <thead>
+        <tr>
+          <th class="sortable" data-col="0" data-type="number">
+            Rank <span class="sort-icon">↕</span>
+          </th>
+          <th class="sortable" data-col="1" data-type="number">
+            Product ID <span class="sort-icon">↕</span>
+          </th>
+          <th class="sortable sorted-desc" data-col="2" data-type="number">
+            Average Rating <span class="sort-icon">↓</span>
+          </th>
+          <th class="sortable" data-col="3" data-type="number">
+            Review Count <span class="sort-icon">↕</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in top_products %}
+        <tr>
+          <td style="color:#888;" data-val="{{ loop.index }}">{{ loop.index }}</td>
+          <td data-val="{{ p.product_id }}">
+            <a href="{{ url_for('product_detail', product_id=p.product_id) }}"
+               style="color:inherit; font-weight:600;">{{ p.product_id }}</a>
+          </td>
+          <td data-val="{{ p.avg }}">
+            <strong>{{ "%.2f"|format(p.avg) }}</strong> / 5
+            <span style="color:#F59E0B; font-size:1rem; margin-left:6px;">
+              {%- for i in range((p.avg | round | int)) %}★{% endfor -%}
+              {%- for i in range(5 - (p.avg | round | int)) %}☆{% endfor -%}
+            </span>
+          </td>
+          <td data-val="{{ p.count }}">{{ p.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <style>
+    #top10-table th.sortable {
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    #top10-table th.sortable:hover { background: #2e2e2e; }
+    #top10-table th .sort-icon {
+      font-size: 0.75rem;
+      color: #bbb;
+      margin-left: 4px;
+    }
+    #top10-table th.sorted-asc .sort-icon,
+    #top10-table th.sorted-desc .sort-icon { color: #4a9e6b; }
+  </style>
+
+  <script>
+  (function () {
+    const table  = document.getElementById("top10-table");
+    const tbody  = table.querySelector("tbody");
+    const ths    = table.querySelectorAll("th.sortable");
+    let sortCol  = 2;   // Average Rating is the default sort
+    let sortAsc  = false;
+
+    function getVal(row, col) {
+      const cell = row.cells[col];
+      const v = cell.dataset.val;
+      return isNaN(v) ? v : Number(v);
+    }
+
+    function sort(col, asc) {
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      rows.sort((a, b) => {
+        const va = getVal(a, col);
+        const vb = getVal(b, col);
+        if (va < vb) return asc ? -1 : 1;
+        if (va > vb) return asc ? 1 : -1;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+
+      ths.forEach(th => {
+        th.classList.remove("sorted-asc", "sorted-desc");
+        th.querySelector(".sort-icon").textContent = "↕";
+      });
+      const active = table.querySelector(`th[data-col="${col}"]`);
+      active.classList.add(asc ? "sorted-asc" : "sorted-desc");
+      active.querySelector(".sort-icon").textContent = asc ? "↑" : "↓";
+    }
+
+    ths.forEach(th => {
+      th.addEventListener("click", () => {
+        const col = Number(th.dataset.col);
+        if (col === sortCol) {
+          sortAsc = !sortAsc;
+        } else {
+          sortCol = col;
+          sortAsc = col === 0 || col === 1; // Rank & Product ID default asc
+        }
+        sort(sortCol, sortAsc);
+      });
+    });
+  })();
+  </script>
+
+  {% else %}
+  <div class="empty-state">No reviews submitted yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

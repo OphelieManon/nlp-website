@@ -1,56 +1,111 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Review Moderation</title>
+{% extends "admin_base.html" %}
+{% block title %}{{ heading }} · Admin{% endblock %}
 
-    <style>
-        body {
-            font-family: Arial;
-            margin: 40px;
-        }
+{% block content %}
+<a href="{{ url_for('admin.admin_dashboard') }}"
+   style="display:inline-flex; align-items:center; gap:6px; font-size:0.875rem; color:#888; text-decoration:none; margin-bottom:20px;">
+  ← Back to Dashboard
+</a>
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+<div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:24px;">
+  <h1 class="page-heading" style="margin-bottom:0;">{{ heading }}</h1>
+  <span style="font-size:0.875rem; color:#888;">{{ total }} total · page {{ page }} of {{ pages }}</span>
+</div>
 
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-
-        th {
-            background: #333;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-
-<h1>Review Moderation</h1>
-
-<table>
-
-    <tr>
-        <th>Product</th>
+<div class="table-wrapper">
+  {% if reviews %}
+  <table>
+    <thead>
+      <tr>
+        <th>Product ID</th>
         <th>Rating</th>
         <th>Prediction</th>
         <th>Final Label</th>
         <th>Review</th>
-    </tr>
-
-    {% for review in reviews %}
-    <tr>
-        <td>{{ review.product_title }}</td>
+      </tr>
+    </thead>
+    <tbody>
+      {% for review in reviews %}
+      <tr>
+        <td>{{ review.product_id }}</td>
         <td>{{ review.rating }}</td>
-        <td>{{ review.predicted_label }}</td>
-        <td>{{ review.final_label }}</td>
+        <td>
+          {% if review.predicted_label == 1 %}
+            <span class="label-badge label-badge--buy">Would buy</span>
+          {% elif review.predicted_label == 0 %}
+            <span class="label-badge label-badge--notbuy">Would not buy</span>
+          {% else %}
+            <span style="color:#aaa;">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if review.final_label == 1 %}
+            <span class="label-badge label-badge--buy">Would buy</span>
+          {% elif review.final_label == 0 %}
+            <span class="label-badge label-badge--notbuy">Would not buy</span>
+          {% else %}
+            <span style="color:#aaa;">—</span>
+          {% endif %}
+        </td>
         <td>{{ review.review_text }}</td>
-    </tr>
-    {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="empty-state">No reviews to display.</div>
+  {% endif %}
+</div>
 
-</table>
+{% if pages > 1 %}
+<nav class="pagination" aria-label="Pagination" style="display:flex; align-items:center; gap:6px; margin-top:24px; justify-content:center;">
 
-</body>
-</html>
+  <a class="page-btn {% if page == 1 %}page-btn--disabled{% endif %}"
+     {% if page > 1 %}href="{{ url_for('admin.review_moderation', page=page-1) }}"{% else %}aria-disabled="true"{% endif %}>
+    ← Prev
+  </a>
+
+  {% for p in range(1, pages + 1) %}
+    {% if p == page %}
+      <span class="page-btn page-btn--active">{{ p }}</span>
+    {% elif p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
+      <a class="page-btn" href="{{ url_for('admin.review_moderation', page=p) }}">{{ p }}</a>
+    {% elif p == page - 3 or p == page + 3 %}
+      <span class="page-btn page-btn--ellipsis">…</span>
+    {% endif %}
+  {% endfor %}
+
+  <a class="page-btn {% if page == pages %}page-btn--disabled{% endif %}"
+     {% if page < pages %}href="{{ url_for('admin.review_moderation', page=page+1) }}"{% else %}aria-disabled="true"{% endif %}>
+    Next →
+  </a>
+
+</nav>
+{% endif %}
+
+<style>
+  .page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: #1a1a1a;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .page-btn:hover { background: #f0f0f0; border-color: #bbb; }
+  .page-btn--active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .page-btn--active:hover { background: #1a1a1a; }
+  .page-btn--disabled { opacity: 0.35; pointer-events: none; }
+  .page-btn--ellipsis { border: none; background: none; cursor: default; }
+  .page-btn--ellipsis:hover { background: none; }
+</style>
+
+{% endblock %}

@@ -55,6 +55,36 @@ def load_products(data_dir: Path | None = None) -> pd.DataFrame:
     return pd.read_csv(_resolve("products.csv", data_dir))
 
 
+_USER_REVIEWS_COLUMNS = [
+    "review_id", "product_id", "user_id", "rating", "review_text", "title", "predicted_label", "final_label",
+]
+
+
+def load_user_reviews(data_dir: Path | None = None) -> pd.DataFrame:
+    """Load user-submitted reviews from data/user_analysis_classification.csv.
+
+    Creates the file with correct headers on cold start if it doesn't exist,
+    so admin pages work before any review has been submitted.
+    """
+    path = (data_dir or _DATA_DIR) / "user_analysis_classification.csv"
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(columns=_USER_REVIEWS_COLUMNS).to_csv(path, index=False)
+    return pd.read_csv(path)
+
+
+def load_product_stats() -> pd.DataFrame:
+    """Return per-product rating stats from the full cosmetics dataset.
+
+    Columns returned: product_id, avg_product_rating, product_rating_count.
+    Each product appears once (metadata is the same across all review rows
+    for a given product, so we deduplicate by product_id).
+    """
+    path = _KNOWLEDGE_DIR / "cosmetics_beauty_products_reviews.csv"
+    df = pd.read_csv(path, usecols=["product_id", "avg_product_rating", "product_rating_count"])
+    return df.drop_duplicates(subset="product_id").reset_index(drop=True)
+
+
 def load_reviews(data_dir: Path | None = None) -> pd.DataFrame:
     """Load reviews.csv (seed + any posted-via-the-form reviews).
 
