@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import similar_card, stars with context %}
+
 {% block title %}{{ product.product_name }} · Maison de Beauté{% endblock %}
 
 {% block content %}
@@ -10,17 +11,34 @@
 
 <section class="product-hero">
   <figure class="product-hero__image cat-{{ product.category | replace(' ', '-') }}">
-    {% if product.product_id in available_images %}
+    
+    {% if product.product_url %}
       <img class="product-hero__image-photo"
-           src="{{ url_for('static', filename='images/' ~ product.product_id ~ '.jpg') }}"
-           alt="{{ product.product_name }}">
+           src="{{ product.product_url }}"
+           alt="{{ product.product_name }}"
+           onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='block';">
+      
+      <!-- fallback if image URL breaks -->
+      <div class="product-hero__image-top" style="display:none;">
+        <span>{{ product.category }}</span>
+        <span>№ {{ "%04d"|format(product.product_id) }}</span>
+      </div>
+
+      <div class="product-hero__image-mark" style="display:none;">
+        {{ product.product_name }}
+      </div>
+
     {% else %}
       <div class="product-hero__image-top">
         <span>{{ product.category }}</span>
         <span>№ {{ "%04d"|format(product.product_id) }}</span>
       </div>
-      <div class="product-hero__image-mark">{{ product.product_name }}</div>
+
+      <div class="product-hero__image-mark">
+        {{ product.product_name }}
+      </div>
     {% endif %}
+
   </figure>
 
   <div class="product-hero__body">
@@ -29,14 +47,14 @@
     <h1 class="product-hero__name">{{ product.product_name }}</h1>
 
     {% if reviews %}
-    {% set avg_rating = (reviews | sum(attribute='rating')) / (reviews | length) %}
+      {% set avg_rating = (reviews | sum(attribute='rating')) / (reviews | length) %}
 
-    <div class="product-hero__rating">
-      {{ stars(avg_rating) }}
-      <span class="product-hero__rating-text">
-        {{ "%.1f"|format(avg_rating) }} / 5 
-      </span>
-    </div>
+      <div class="product-hero__rating">
+        {{ stars(avg_rating) }}
+        <span class="product-hero__rating-text">
+          {{ "%.1f"|format(avg_rating) }} / 5 
+        </span>
+      </div>
     {% else %}
       <div class="product-hero__rating">
         <span class="product-hero__rating-text">No ratings yet</span>
@@ -95,15 +113,18 @@
           {{ stars(r.rating) }}
 
           {% if r.title %}
-            <a href="{{ url_for('review_detail', product_id=product.product_id, review_id=r.review_id) }}" class="review__title-link" style="text-decoration: none; color: inherit;">
-              <h3 class="review__title" style="margin: 0; display: inline-block;">{{ r.title }}</h3>
+            <a href="{{ url_for('review_detail', product_id=product.product_id, review_id=r.review_id) }}"
+               class="review__title-link"
+               style="text-decoration: none; color: inherit;">
+              <h3 class="review__title" style="margin: 0; display: inline-block;">
+                {{ r.title }}
+              </h3>
             </a>
           {% endif %}
 
           <p class="review__text">{{ r.review_text }}</p>
 
           {% if r.predicted_label is defined and r.predicted_label == r.predicted_label %}
-            {# Jinja-safe NaN check — NaN != NaN. #}
             <div class="review__label">
               Label: {{ "Would buy" if r.predicted_label|int == 1 else "Would not buy" }}
             </div>
