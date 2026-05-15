@@ -11,3 +11,14 @@ review_id,product_id,user_id,rating,review_text,review_date,title,predicted_labe
 10010,132,U_guest_10,1,product sucks,2026-05-14,Sucks,0,0
 10011,132,U_guest_11,1,Don't like it,2026-05-14,Never buy,0,0
 10012,132,U_guest_12,1,product sucks,2026-05-14,sucks,0,0
+10013,134,U_guest_13,1,Totally would buy,2026-05-15,Great product,0,0
+10014,134,U_guest_14,5,bad,2026-05-15,terrible,1,1
+10015,134,U_guest_15,1,Love it,2026-05-15,terrible,0,0
+10016,134,U_guest_16,4,Very reasonable price,2026-05-15,Great Product,0,0
+10017,133,U_guest_17,4,Bad,2026-05-15,Bad,0,0
+10018,132,U_guest_18,1,bad,2026-05-15,bad,0,0
+10019,132,U_guest_19,2,bad,2026-05-15,bad,0,0
+10020,133,U_guest_20,4,bad,2026-05-15,bad,0,0
+10021,134,U_guest_21,4,bad,2026-05-15,bad,0,0
+10022,134,U_guest_22,4,Very good,2026-05-15,Excellent,0,0
+10023,198,U_guest_20,5,z,2026-05-15,z,1,1
