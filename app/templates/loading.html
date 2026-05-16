@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loading — Maison de Beauté</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,30..100;1,9..144,300..900,30..100&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <style>
+    .loading-screen {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5rem;
+      background: var(--bg);
+      font-family: var(--font-body);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .loading-brand {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 300;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+
+    .loading-brand em {
+      font-style: italic;
+      font-weight: 300;
+    }
+
+    .loading-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .loading-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .progress-track {
+      width: min(380px, 80vw);
+      height: 3px;
+      background: var(--line);
+      border-radius: var(--r-pill);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 40%;
+      background: var(--accent);
+      border-radius: var(--r-pill);
+      animation: slide 1.6s ease-in-out infinite;
+    }
+
+    @keyframes slide {
+      0%   { transform: translateX(-100%);  width: 40%; }
+      50%  { transform: translateX(160%);   width: 60%; }
+      100% { transform: translateX(300%);   width: 40%; }
+    }
+
+    .loading-hint {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+<div class="loading-screen">
+  <div class="loading-brand">Maison <em>de Beauté</em></div>
+
+  <div class="loading-body">
+    <p class="loading-label">Loading NLP models</p>
+    <div class="progress-track">
+      <div class="progress-bar"></div>
+    </div>
+    <p class="loading-hint">FastText &amp; LightGBM models are warming up…</p>
+  </div>
+</div>
+
+<script>
+  (function poll() {
+    fetch("/ready")
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ready) {
+          window.location.replace("/");
+        } else {
+          setTimeout(poll, 1000);
+        }
+      })
+      .catch(function() { setTimeout(poll, 2000); });
+  })();
+</script>
+</body>
+</html>

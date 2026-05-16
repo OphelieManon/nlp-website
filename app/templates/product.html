@@ -90,8 +90,8 @@
 <section class="reviews">
   <div class="reviews__heading">
     <h2>
-      {% if reviews %}
-        {{ reviews|length }} review{{ 's' if reviews|length != 1 else '' }}
+      {% if reviews_total %}
+        {{ reviews_total }} review{{ 's' if reviews_total != 1 else '' }}
       {% else %}
         Reviews
       {% endif %}
@@ -124,9 +124,9 @@
 
           <p class="review__text">{{ r.review_text }}</p>
 
-          {% if r.predicted_label is defined and r.predicted_label == r.predicted_label %}
+          {% if r.final_label is defined and r.final_label == r.final_label %}
             <div class="review__label">
-              Label: {{ "Would buy" if r.predicted_label|int == 1 else "Would not buy" }}
+              Label: {{ "Would buy" if r.final_label|int == 1 else "Would not buy" }}
             </div>
           {% endif %}
         </div>
@@ -139,6 +139,43 @@
       </div>
     {% endif %}
   </div>
+
+  {% if reviews_pages > 1 %}
+  <nav class="pagination" aria-label="Reviews pagination">
+    {% if reviews_page > 1 %}
+      <a class="pagination__link"
+         href="{{ url_for('product_detail', product_id=product.product_id, page=reviews_page - 1) }}">← Prev</a>
+    {% else %}
+      <span class="pagination__link pagination--disabled">← Prev</span>
+    {% endif %}
+
+    <div class="pagination__pages">
+      {# Build the set of page numbers to show: always first, last, and ±1 around current #}
+      {% set ns = namespace(prev=0) %}
+      {% for p in range(1, reviews_pages + 1) %}
+        {% if p == 1 or p == reviews_pages or (p >= reviews_page - 1 and p <= reviews_page + 1) %}
+          {% if p - ns.prev > 1 %}
+            <span>…</span>
+          {% endif %}
+          {% if p == reviews_page %}
+            <strong>{{ p }}</strong>
+          {% else %}
+            <a href="{{ url_for('product_detail', product_id=product.product_id, page=p) }}">{{ p }}</a>
+          {% endif %}
+          {% set ns.prev = p %}
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if reviews_page < reviews_pages %}
+      <a class="pagination__link"
+         href="{{ url_for('product_detail', product_id=product.product_id, page=reviews_page + 1) }}">Next →</a>
+    {% else %}
+      <span class="pagination__link pagination--disabled">Next →</span>
+    {% endif %}
+  </nav>
+  {% endif %}
+
 </section>
 
 {% if similar %}

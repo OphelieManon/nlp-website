@@ -8,22 +8,20 @@ Fix applied:
 
 from __future__ import annotations
 
-from collections import Counter
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
 
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
 from xgboost import XGBClassifier
 
-from app.nlp.preprocessing import tokenize
+from app.nlp.review_text_title_model.buyer_pipeline import predict as buyer_title_text_predict
+from app.nlp.review_text_title_rating_price_model.buyer_pipeline_text_numeric import predict as buyer_text_numeric_predict
 
 
 # =========================
@@ -31,58 +29,23 @@ from app.nlp.preprocessing import tokenize
 # =========================
 
 _ARTIFACT_FILES = (
-    "vocab.joblib",
-    "text_model.joblib",
-    "title_model.joblib",
     "numeric_model.joblib",
 )
 
-_TOP_N_TO_DROP = 20
-
 # Fusion weights (you can tune later)
-W_TEXT = 0
-W_TITLE = 0
-W_NUM = 1
+W_TEXT_NUMERICAL = 0.70  # strongest, most comprehensive
+W_NUM            = 0.20  # second strongest (numeric-only is very good)
+W_TEXT           = 0.10  # weakest — text+title alone lags behind
 
 
 # =========================
 # Helpers
 # =========================
 
-def _build_vocab(token_lists: list[list[str]]) -> dict[str, int]:
-    tf = Counter()
-    df_count = Counter()
-
-    for tokens in token_lists:
-        tf.update(tokens)
-        df_count.update(set(tokens))
-
-    top_n = {term for term, _ in df_count.most_common(_TOP_N_TO_DROP)}
-
-    keep = sorted(
-        t for t, count in tf.items()
-        if count >= 2 and t not in top_n
-    )
-
-    if not keep:
-        keep = ["__empty__"]
-
-    return {term: i for i, term in enumerate(keep)}
-
-
 def _numeric_features(rating, price) -> np.ndarray:
     r = np.asarray(rating, dtype=float).reshape(-1, 1)
     lp = np.log1p(np.asarray(price, dtype=float)).reshape(-1, 1)
     return np.hstack([r, lp])
-
-
-def _vec_factory(vocab: dict[str, int]) -> CountVectorizer:
-    return CountVectorizer(
-        vocabulary=vocab,
-        tokenizer=str.split,
-        lowercase=False,
-        token_pattern=None,
-    )
 
 
 # =========================
@@ -92,16 +55,12 @@ def _vec_factory(vocab: dict[str, int]) -> CountVectorizer:
 class ReviewClassifier:
 
     def __init__(self) -> None:
-        self.vocab = None
-        self.text_model = None
-        self.title_model = None
         self.numeric_model = None
 
     # =========================
     # TRAINING
     # =========================
     def train(self, df: pd.DataFrame) -> dict[str, float]:
-        print("🔥 TRAIN FUNCTION IS RUNNING", flush=True)
         df = df.dropna(
             subset=[
                 "review_text",
@@ -117,9 +76,6 @@ class ReviewClassifier:
 
         y = df["is_a_buyer"].astype(int).to_numpy()
 
-        text_tokens = [tokenize(t) for t in df["review_text"].tolist()]
-        title_tokens = [tokenize(t) for t in df["review_title"].tolist()]
-
         idx_train, idx_test = train_test_split(
             np.arange(len(df)),
             test_size=0.2,
@@ -128,41 +84,6 @@ class ReviewClassifier:
         )
 
         y_train, y_test = y[idx_train], y[idx_test]
-
-        text_train = [" ".join(text_tokens[i]) for i in idx_train]
-        text_test = [" ".join(text_tokens[i]) for i in idx_test]
-
-        title_train = [" ".join(title_tokens[i]) for i in idx_train]
-        title_test = [" ".join(title_tokens[i]) for i in idx_test]
-
-        # =========================
-        # VOCAB
-        # =========================
-        self.vocab = _build_vocab([text_tokens[i] for i in idx_train])
-
-        # =========================
-        # HEAD A: TEXT
-        # =========================
-        self.text_model = Pipeline([
-            ("vec", _vec_factory(self.vocab)),
-            ("clf", LogisticRegression(
-                max_iter=1000,
-                class_weight="balanced"
-            )),
-        ])
-        self.text_model.fit(text_train, y_train)
-
-        # =========================
-        # HEAD B: TITLE
-        # =========================
-        self.title_model = Pipeline([
-            ("vec", _vec_factory(self.vocab)),
-            ("clf", LogisticRegression(
-                max_iter=1000,
-                class_weight="balanced"
-            )),
-        ])
-        self.title_model.fit(title_train, y_train)
 
         # =========================
         # HEAD C: NUMERIC (FIXED → XGBOOST)
@@ -193,49 +114,36 @@ class ReviewClassifier:
         # =========================
         # EVALUATION (FUSION)
         # =========================
-        p_text = self.text_model.predict_proba(text_test)[:, 1]
-        p_title = self.title_model.predict_proba(title_test)[:, 1]
+        p_buyer_text_numeric = np.array([
+            buyer_text_numeric_predict(
+                df.iloc[i]["review_text"],
+                df.iloc[i]["review_title"],
+                df.iloc[i]["review_rating"],
+                df.iloc[i]["price"],
+            )[1][1]
+            for i in idx_test
+        ])
+        p_buyer_title_text = np.array([
+            buyer_title_text_predict(
+                df.iloc[i]["review_text"],
+                df.iloc[i]["review_title"],
+            )[1][1]
+            for i in idx_test
+        ])
         p_num = self.numeric_model.predict_proba(X_num_test)[:, 1]
 
-        #debug
-        # =========================
-        # PER-HEAD ACCURACY (DEBUG)
-        # =========================
-
-        y_text_pred = (p_text >= 0.5).astype(int)
-        y_title_pred = (p_title >= 0.5).astype(int)
-        y_num_pred = (p_num >= 0.5).astype(int)
-
-        text_acc = accuracy_score(y_test, y_text_pred)
-        title_acc = accuracy_score(y_test, y_title_pred)
-        num_acc = accuracy_score(y_test, y_num_pred)
-
-        print("\n===== PER-HEAD PERFORMANCE =====")
-        print(f"TEXT   ACC: {text_acc:.4f}")
-        print(f"TITLE  ACC: {title_acc:.4f}")
-        print(f"NUM    ACC: {num_acc:.4f}")
-        print("================================\n")
-
-        text_f1 = f1_score(y_test, y_text_pred, zero_division=0)
-        title_f1 = f1_score(y_test, y_title_pred, zero_division=0)
-        num_f1 = f1_score(y_test, y_num_pred, zero_division=0)
-
-        print(f"TEXT   F1: {text_f1:.4f}")
-        print(f"TITLE  F1: {title_f1:.4f}")
-        print(f"NUM    F1: {num_f1:.4f}")
-
-        ####
+        _w_sum = W_TEXT_NUMERICAL + W_TEXT + W_NUM
         p_fused = (
-            W_TEXT * p_text +
-            W_TITLE * p_title +
+            W_TEXT_NUMERICAL * p_buyer_text_numeric +
+            W_TEXT * p_buyer_title_text +
             W_NUM * p_num
-        )
+        ) / _w_sum
 
         y_hat = (p_fused >= 0.5).astype(int)
 
         return {
-            "text_acc": float(accuracy_score(y_test, (p_text >= 0.5).astype(int))),
-            "title_acc": float(accuracy_score(y_test, (p_title >= 0.5).astype(int))),
+            "text_acc": float(accuracy_score(y_test, (p_buyer_text_numeric >= 0.5).astype(int))),
+            "title_acc": float(accuracy_score(y_test, (p_buyer_title_text >= 0.5).astype(int))),
             "numeric_acc": float(accuracy_score(y_test, (p_num >= 0.5).astype(int))),
             "fused_acc": float(accuracy_score(y_test, y_hat)),
             "fused_f1": float(f1_score(y_test, y_hat, zero_division=0)),
@@ -246,45 +154,37 @@ class ReviewClassifier:
     # =========================
     def predict(self, title: str, rating: int, review_text: str, price: float):
 
-        if any(m is None for m in [self.text_model, self.title_model, self.numeric_model]):
+        if self.numeric_model is None:
             raise RuntimeError("Model not trained or loaded.")
 
-        text_str = " ".join(tokenize(review_text))
-        title_str = " ".join(tokenize(title))
-
         # HEAD A
-        p_text = self.text_model.predict_proba([text_str])[0, 1]
+        _, _proba_text_numerical = buyer_text_numeric_predict(review_text, title, rating, price)
+        p_buyer_text_numeric = float(_proba_text_numerical[1])
 
         # HEAD B
-        p_title = self.title_model.predict_proba([title_str])[0, 1]
+        _, _proba_text = buyer_title_text_predict(review_text, title)
+        p_buyer_title_text = float(_proba_text[1])
 
         # HEAD C
         p_num = self.numeric_model.predict_proba(
             _numeric_features([rating], [price])
         )[0, 1]
 
-        # DEBUG
-        print("\n===== DEBUG PREDICT =====", flush=True)
-        print("TITLE:", title, flush=True)
-        print("RATING:", rating, flush=True)
-        print("PRICE:", price, flush=True)
-        print("TEXT:", review_text[:80], flush=True)
-
-        print("p_text :", p_text, flush=True)
-        print("p_title:", p_title, flush=True)
-        print("p_num  :", p_num, flush=True)
-
-        # FUSION (ONLY ONCE)
+        _w_sum = W_TEXT_NUMERICAL + W_TEXT + W_NUM
         proba = (
-            W_TEXT * p_text +
-            W_TITLE * p_title +
+            W_TEXT_NUMERICAL * p_buyer_text_numeric +
+            W_TEXT * p_buyer_title_text +
             W_NUM * p_num
-        )
-
-        print("FINAL PROBA:", proba, flush=True)
-        print("========================\n", flush=True)
+        ) / _w_sum
 
         label = 1 if proba >= 0.5 else 0
+
+        print(
+            f"[classifier] Head A (text+title+rating+price) : {p_buyer_text_numeric:.4f}\n"
+            f"[classifier] Head B (text+title)              : {p_buyer_title_text:.4f}\n"
+            f"[classifier] Head C (rating+price)            : {p_num:.4f}\n"
+            f"[classifier] Fused                            : {proba:.4f}  →  label={label}"
+        )
 
         return label, float(proba)
 
@@ -292,25 +192,19 @@ class ReviewClassifier:
     # SAVE / LOAD
     # =========================
     def save(self, target_dir: Path | str) -> None:
-        if any(m is None for m in [self.vocab, self.text_model, self.title_model, self.numeric_model]):
+        if self.numeric_model is None:
             raise RuntimeError("Cannot save untrained model.")
 
         target = Path(target_dir)
         target.mkdir(parents=True, exist_ok=True)
 
-        joblib.dump(self.vocab, target / _ARTIFACT_FILES[0])
-        joblib.dump(self.text_model, target / _ARTIFACT_FILES[1])
-        joblib.dump(self.title_model, target / _ARTIFACT_FILES[2])
-        joblib.dump(self.numeric_model, target / _ARTIFACT_FILES[3])
+        joblib.dump(self.numeric_model, target / _ARTIFACT_FILES[0])
 
     @classmethod
     def load(cls, source_dir: Path | str) -> "ReviewClassifier":
         source = Path(source_dir)
 
         clf = cls()
-        clf.vocab = joblib.load(source / _ARTIFACT_FILES[0])
-        clf.text_model = joblib.load(source / _ARTIFACT_FILES[1])
-        clf.title_model = joblib.load(source / _ARTIFACT_FILES[2])
-        clf.numeric_model = joblib.load(source / _ARTIFACT_FILES[3])
+        clf.numeric_model = joblib.load(source / _ARTIFACT_FILES[0])
 
         return clf

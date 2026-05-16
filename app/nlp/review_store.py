@@ -100,15 +100,15 @@ class ReviewStore:
         new row.
         """
         new_row = {
-            "review_id": self.next_review_id(),
-            "product_id": int(product_id),
-            "user_id": self.next_user_id(),
-            "rating": int(rating),
-            "review_text": review_text,
-            "review_date": _dt.date.today().isoformat(),
-            "title": title,
+            "review_id":       self.next_review_id(),
+            "product_id":      int(product_id),
+            "user_id":         self.next_user_id(),
+            "rating":          int(rating),
+            "review_text":     review_text,
+            "review_date":     _dt.date.today().isoformat(),
+            "title":           title,
             "predicted_label": int(predicted_label),
-            "final_label": int(final_label),
+            "final_label":     int(final_label),
         }
         df = self._read()
         out = pd.concat([df, pd.DataFrame([new_row], columns=_COLUMNS)], ignore_index=True)

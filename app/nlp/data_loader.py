@@ -47,7 +47,7 @@ def _resolve(filename: str, data_dir: Path | None = None) -> Path:
 def load_products(data_dir: Path | None = None) -> pd.DataFrame:
     """Load the 1,000-product display catalogue.
 
-    Columns: ``product_id, product_name, category, price, image_path``.
+    Columns: ``product_id, product_name, category, price, description, product_url``.
     This is the data the Flask app shows to users. Search (Task 1),
     recommendations (Task 3), and aspect extraction (Task 4) all
     operate over these rows.

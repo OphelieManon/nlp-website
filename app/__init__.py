@@ -42,12 +42,12 @@ without changing any route or template code.
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
-from flask import Flask, abort, redirect, render_template, request, url_for
+from flask import Flask, abort, jsonify, redirect, render_template, request, url_for
 
 from app.nlp.aspect_extractor import AspectExtractor
-from app.nlp.classifier import ReviewClassifier
 from app.nlp.data_loader import load_products, load_reviews
 from app.nlp.review_store import ReviewStore
 from app.nlp.search import SearchIndex
@@ -59,8 +59,6 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 _DEFAULT_MODELS_DIR = _REPO_ROOT / "models"
 _DEFAULT_DATA_DIR = _REPO_ROOT / "data"
 _KNOWLEDGE_DIR = _REPO_ROOT / "knowledge"
-_IMAGES_DIR = Path(__file__).resolve().parent / "static" / "images"
-
 # Stable category ordering used by the home page sections so the
 # layout doesn't reshuffle between requests.
 _CATEGORY_ORDER = ("Skincare", "Makeup", "Fragrance", "Beauty Tools", "Haircare")
@@ -77,25 +75,6 @@ _SLUG_BY_CATEGORY = {v: k for k, v in _CATEGORY_BY_SLUG.items()}
 _FEATURED_PER_SECTION = 4   # Products shown per category on the home page.
 _PRODUCTS_PER_PAGE = 24     # Page size for /category/<slug>.
 
-
-def _scan_available_images() -> set[int]:
-    """Return product_ids for which a static JPG exists on disk.
-
-    Built once at app startup so the templates can decide per-product
-    whether to render an ``<img>`` tag or fall back to the CSS
-    gradient placeholder. Running
-    ``python -m scripts.generate_product_images`` and restarting
-    Flask is the way to populate this.
-
-    Used for the assignment's "additional artificial display data"
-    requirement — the catalogue is real, the per-product hero
-    imagery is generated.
-    """
-    if not _IMAGES_DIR.exists():
-        return set()
-    return {
-        int(p.stem) for p in _IMAGES_DIR.glob("*.jpg") if p.stem.isdigit()
-    }
 
 
 def _validate(form) -> tuple[str | None, str, int, str]:
@@ -179,24 +158,53 @@ def create_app(
     # filters terms that appear in only one product's reviews.
     aspect_extractor = AspectExtractor(reviews_by_product, min_df=2)
 
-    # Task 2 classifier: prefer the injected instance; fall back to
-    # loading from disk; finally degrade gracefully to None.
-    if classifier is None:
-        try:
-            classifier = ReviewClassifier.load(_DEFAULT_MODELS_DIR)
-        except FileNotFoundError:
-            classifier = None  # review route returns 503 until training runs
+    # Task 2 classifier: if an instance was injected (e.g. in tests),
+    # use it immediately. Otherwise load the heavy NLP models
+    # (FastText + LightGBM) in a background thread so the app starts
+    # serving instantly and shows a loading screen until ready.
+    _models_ready = threading.Event()
+    _clf_ref: list = []  # one-element mutable container shared with closures
+
+    if classifier is not None:
+        # Injected (test) classifier — mark ready immediately.
+        _clf_ref.append(classifier)
+        _models_ready.set()
+    else:
+        def _load_models() -> None:
+            from app.nlp.classifier import ReviewClassifier  # triggers FastText + LightGBM load
+            try:
+                clf = ReviewClassifier.load(_DEFAULT_MODELS_DIR)
+            except FileNotFoundError:
+                clf = None
+            _clf_ref.append(clf)
+            _models_ready.set()
+
+        threading.Thread(target=_load_models, daemon=True, name="model-loader").start()
 
     app.config["search_index"] = search_index
-    app.config["classifier"] = classifier
-
-    available_images = _scan_available_images()
 
     @app.context_processor
-    def _inject_available_images():
-        # Templates use the `available_images` set to decide whether
-        # to render <img> tags or fall back to the CSS gradient.
-        return {"available_images": available_images}
+    def _inject_globals():
+        return {"total_products_count": len(products)}
+
+    # Gate all requests until the NLP models finish loading.
+    _LOADING_EXEMPT = {"loading_screen", "ready_check", "static"}
+
+    @app.before_request
+    def _wait_for_models():
+        if _models_ready.is_set():
+            return
+        if request.endpoint in _LOADING_EXEMPT:
+            return
+        return redirect(url_for("loading_screen"))
+
+    @app.route("/loading")
+    def loading_screen():
+        return render_template("loading.html")
+
+    @app.route("/ready")
+    def ready_check():
+        return jsonify(ready=_models_ready.is_set())
 
     # ------------------------------------------------------------------
     # Route: home page — catalogue index. No NLP, just per-category
@@ -272,13 +280,26 @@ def create_app(
     # reviews, Task 3's similar-items section, and Task 4's
     # "Customers mention" pills. 404 if the id is unknown.
     # ------------------------------------------------------------------
+    _REVIEWS_PER_PAGE = 10
+
     @app.route("/product/<int:product_id>")
     def product_detail(product_id: int):
         row = products[products["product_id"] == product_id]
         if row.empty:
             abort(404)
         product = row.iloc[0].to_dict()
-        review_list = reviews_by_product.get(product_id, [])
+        all_reviews = reviews_by_product.get(product_id, [])
+
+        total_reviews = len(all_reviews)
+        total_pages   = max(1, (total_reviews + _REVIEWS_PER_PAGE - 1) // _REVIEWS_PER_PAGE)
+        try:
+            page = int(request.args.get("page", 1))
+        except ValueError:
+            page = 1
+        page = max(1, min(page, total_pages))
+        start = (page - 1) * _REVIEWS_PER_PAGE
+        review_list = all_reviews[start : start + _REVIEWS_PER_PAGE]
+
         # Task 3: similar-item recommendations (top 6, cosine + +0.1
         # same-category boost).
         similar = search_index.similar(product_id, top_n=6)
@@ -288,6 +309,7 @@ def create_app(
         return render_template(
             "product.html",
             product=product, reviews=review_list, similar=similar, aspects=aspects,
+            reviews_page=page, reviews_pages=total_pages, reviews_total=total_reviews,
         )
 
     # ------------------------------------------------------------------
@@ -351,14 +373,17 @@ def create_app(
                 # Insert at the head so the just-posted review appears
                 # first on the product page (spec §7.7 ordering).
                 reviews_by_product.setdefault(product_id, []).insert(0, new_review)
-                return redirect(url_for("product_detail", product_id=product_id))
+                return redirect(url_for("review_detail",
+                                        product_id=product_id,
+                                        review_id=new_review["review_id"]))
 
         # Branch 2: predict step. Run the fused classifier and render
         # the form back with the prediction shown.
-        if classifier is None:
+        clf = _clf_ref[0] if _clf_ref else None
+        if clf is None:
             abort(503)
         price = float(product["price"])
-        pred_label, proba = classifier.predict(title, rating, review_text, price)
+        pred_label, proba = clf.predict(title, rating, review_text, price)
         return render_template(
             "review_form.html",
             product=product, error=None,

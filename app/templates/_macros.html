@@ -28,6 +28,9 @@
 <a class="card" href="/product/{{ p.product_id }}">
   <div class="card__image cat-{{ _slug_category(p.category) }}">
     {{ _product_image_inner(p) }}
+    {% if p.score is defined %}
+      <span class="card__match-badge">{{ (p.score * 100) | round | int }}% match</span>
+    {% endif %}
   </div>
 
   <div class="card__category">{{ p.category }}</div>

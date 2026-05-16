@@ -1,40 +1,96 @@
 {% extends "base.html" %}
+{% from "_macros.html" import stars %}
+
+{% block title %}{{ review.title }} · {{ product.product_name }} · Maison de Beauté{% endblock %}
 
 {% block content %}
+<div class="form-shell">
 
-<div class="container">
+  <nav class="breadcrumb" style="margin-bottom: 2rem;">
+    <a href="{{ url_for('product_detail', product_id=product.product_id) }}">← {{ product.product_name }}</a>
+  </nav>
 
-    <a href="{{ url_for('product_detail',
-        product_id=product.product_id) }}">
-        ← Back to product
-    </a>
+  {# ── Product strip ─────────────────────────────────────────── #}
+  <a href="{{ url_for('product_detail', product_id=product.product_id) }}"
+     style="display:flex; gap:1.25rem; align-items:center; margin-bottom:2rem;
+            padding:1rem; border-radius:var(--r-md); background:var(--bg);
+            text-decoration:none; border:1px solid var(--line);
+            transition: border-color 160ms ease;"
+     onmouseover="this.style.borderColor='var(--accent)'"
+     onmouseout="this.style.borderColor='var(--line)'">
 
-    <h1>{{ review.title }}</h1>
+    <div class="card__image cat-{{ product.category | replace(' ', '-') }}"
+         style="width:80px; min-width:80px; height:80px; aspect-ratio:1/1;
+                border-radius:var(--r-sm); margin:0; padding:8px; flex-shrink:0;">
+      {% if product.product_url %}
+        <img class="card__image-photo" src="{{ product.product_url }}"
+             alt="{{ product.product_name }}"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <div class="card__image-mark" style="font-size:10px; display:none;">
+          {{ product.product_name }}
+        </div>
+      {% else %}
+        <div class="card__image-mark" style="font-size:10px;">
+          {{ product.product_name }}
+        </div>
+      {% endif %}
+    </div>
 
-    <p>
-        Product:
+    <div>
+      <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.1em;
+                  text-transform:uppercase; color:var(--muted); margin-bottom:0.25rem;">
+        {{ product.category }}
+      </div>
+      <div style="font-family:var(--font-display); font-size:1rem; font-weight:460;
+                  color:var(--ink); line-height:1.2; margin-bottom:0.35rem;">
         {{ product.product_name }}
-    </p>
+      </div>
+      <div style="font-size:0.875rem; font-weight:600; color:var(--accent);">
+        ${{ "%.2f"|format(product.price) }}
+      </div>
+    </div>
+  </a>
 
-    <p>
-        Rating:
-        {{ review.rating }}/5
-    </p>
+  {# ── Review ────────────────────────────────────────────────── #}
+  <div class="form-shell__eyebrow">Review</div>
+  <h1>{{ review.title }}</h1>
 
-    <p>
-        Review: 
-        {{ review.review_text }}
-    </p>
+  <div class="review__meta" style="margin-bottom:1.5rem;">
+    <strong>{{ review.user_id }}</strong>
+    {{ review.review_date }}
+  </div>
 
-    <p>
-        Prediction:
-        {% if review.predicted_label == 1 %}
-            Would Buy
-        {% else %}
-            Would Not Buy
-        {% endif %}
-    </p>
+  {{ stars(review.rating) }}
+  <p style="font-size:0.75rem; color:var(--muted); margin:0.25rem 0 1.5rem;">
+    {{ review.rating }} / 5
+  </p>
+
+  <p class="review__text" style="font-size:1rem; margin-bottom:2rem;">
+    {{ review.review_text }}
+  </p>
+
+  {% set is_buyer = review.final_label | int == 1 %}
+  {% set banner_mod = "buy" if is_buyer else "notbuy" %}
+  <div class="predict-banner predict-banner--{{ banner_mod }}">
+    <div class="predict-banner__icon">{{ "✓" if is_buyer else "✕" }}</div>
+    <div class="predict-banner__body">
+      <span class="predict-banner__label">Label</span>
+      <strong class="predict-banner__verdict">{{ "Would buy" if is_buyer else "Would not buy" }}</strong>
+    </div>
+    {% if review.predicted_label is defined and review.final_label is defined
+          and review.predicted_label | int != review.final_label | int %}
+      <span class="predict-banner__conf" style="font-size:0.75rem;">User override</span>
+    {% endif %}
+  </div>
+
+  {# ── Actions ───────────────────────────────────────────────── #}
+  <div style="margin-top:2.5rem; padding-top:1.5rem; border-top:1px solid var(--line);
+              display:flex; gap:1rem; align-items:center;">
+    <a href="{{ url_for('product_detail', product_id=product.product_id) }}"
+       class="btn btn--primary">Back to product</a>
+    <a href="{{ url_for('review_form', product_id=product.product_id) }}"
+       class="btn btn--link">Write another review</a>
+  </div>
 
 </div>
-
 {% endblock %}

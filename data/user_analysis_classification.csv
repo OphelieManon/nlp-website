@@ -22,3 +22,12 @@ review_id,product_id,user_id,rating,review_text,review_date,title,predicted_labe
 10021,134,U_guest_21,4,bad,2026-05-15,bad,0,0
 10022,134,U_guest_22,4,Very good,2026-05-15,Excellent,0,0
 10023,198,U_guest_20,5,z,2026-05-15,z,1,1
+10024,654428,U_guest_23,5,test,2026-05-16,test,0,0
+10025,2662674,U_guest_24,5,Buy,2026-05-16,Ok,1,0
+10026,2662674,U_guest_25,5,ok-1,2026-05-16,ok-1,1,0
+10027,2662674,U_guest_26,5,ok-2,2026-05-16,ok-2,1,0
+10028,2662674,U_guest_27,5,Ok-2,2026-05-16,Ok-2,1,0
+10029,2662674,U_guest_28,3,Ok-1,2026-05-16,Ok-1,0,1
+10030,654419,U_guest_29,4,Awesome,2026-05-16,Awesome,1,1
+10031,654419,U_guest_30,3,would not but,2026-05-16,Would buy,1,0
+10032,654419,U_guest_31,5,ok,2026-05-16,ok1,1,0

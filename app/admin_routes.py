@@ -61,7 +61,7 @@ def admin_dashboard():
 
     return render_template(
         "admin_dashboard.html",
-        total_products=products["product_id"].nunique(),
+        total_products=len(products),
         total_reviews=len(reviews),
         overrides_count=overrides_count,
     )

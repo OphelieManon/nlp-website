@@ -413,6 +413,23 @@ p { margin: 0 0 1em; }
   display: block;
 }
 .card:hover .card__image-photo { filter: brightness(1.02) saturate(1.04); }
+
+.card__match-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: var(--r-pill);
+  opacity: 0.88;
+}
 .product-hero__image-photo {
   position: absolute;
   inset: 0;

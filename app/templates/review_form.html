@@ -18,13 +18,13 @@
   {% if predicted %}
     {% set label_text = "Would buy" if predicted.label == 1 else "Would not buy" %}
     {% set banner_mod = "buy" if predicted.label == 1 else "notbuy" %}
-    <div class="predict-banner predict-banner--{{ banner_mod }}">
-      <div class="predict-banner__icon">{{ "✓" if predicted.label == 1 else "✕" }}</div>
+    <div id="predict-banner" class="predict-banner predict-banner--{{ banner_mod }}">
+      <div id="banner-icon" class="predict-banner__icon">{{ "✓" if predicted.label == 1 else "✕" }}</div>
       <div class="predict-banner__body">
-        <span class="predict-banner__label">Our classifier predicts</span>
-        <strong class="predict-banner__verdict">{{ label_text }}</strong>
+        <span id="banner-label" class="predict-banner__label">Our classifier predicts</span>
+        <strong id="banner-verdict" class="predict-banner__verdict">{{ label_text }}</strong>
       </div>
-      <span class="predict-banner__conf">{{ "%.0f%%"|format(predicted.proba * 100) }} confidence</span>
+      <span id="banner-conf" class="predict-banner__conf">{{ "%.0f%%"|format((predicted.proba if predicted.label == 1 else 1 - predicted.proba) * 100) }} confidence</span>
     </div>
   {% endif %}
 
@@ -84,4 +84,38 @@
        class="btn btn--link">Cancel</a>
   </form>
 </div>
+
+{% if predicted %}
+<script>
+  (function () {
+    var modelLabel  = {{ predicted.label }};
+    var modelConf   = "{{ '%.0f%%'|format((predicted.proba if predicted.label == 1 else 1 - predicted.proba) * 100) }}";
+
+    var banner  = document.getElementById("predict-banner");
+    var icon    = document.getElementById("banner-icon");
+    var label   = document.getElementById("banner-label");
+    var verdict = document.getElementById("banner-verdict");
+    var conf    = document.getElementById("banner-conf");
+
+    document.querySelectorAll('input[name="final_label"]').forEach(function (radio) {
+      radio.addEventListener("change", function () {
+        var chosen = parseInt(this.value, 10);
+        var isBuy  = chosen === 1;
+
+        banner.className  = "predict-banner predict-banner--" + (isBuy ? "buy" : "notbuy");
+        icon.textContent  = isBuy ? "✓" : "✕";
+        verdict.textContent = isBuy ? "Would buy" : "Would not buy";
+
+        if (chosen === modelLabel) {
+          label.textContent = "Our classifier predicts";
+          conf.textContent  = modelConf + " confidence";
+        } else {
+          label.textContent = "Your override";
+          conf.textContent  = "";
+        }
+      });
+    });
+  })();
+</script>
+{% endif %}
 {% endblock %}
