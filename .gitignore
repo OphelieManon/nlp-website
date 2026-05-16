@@ -6,7 +6,11 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 nltk_data/
-models/*.joblib
+models/
+app/nlp/review_text_title_model/*.joblib
+app/nlp/review_text_title_model/*.model
+app/nlp/review_text_title_rating_price_model/*.joblib
+app/nlp/review_text_title_rating_price_model/*.model
 data/*.sqlite
 knowledge/*.pdf
 app/static/fonts/
